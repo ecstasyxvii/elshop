@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Каталог товаров</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa;}
+        .card { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Каталог товаров</h1>
+        <div id="product-list" class="row"></div>
+    </div>
+
+    <script>
+        fetch('/api/products')
+            .then(response => response.json())
+            .then(data => {
+                const productList = document.getElementById('product-list');
+                data.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'col-md-4 mb-4';
+                    productCard.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${product.name}</h5>
+                                <p class="card-text">${product.description}</p>
+                                <p class="card-text"><strong>Цена:</strong> ${product.price} руб.</p>
+                                <button class="btn btn-primary" onclick="orderProduct(${product.id})">Заказать</button>
+                            </div>
+                        </div>
+                    `;
+                    productList.appendChild(productCard);
+                });
+            });
+
+        function orderProduct(productId) {
+            const customerName = prompt("Введите ваше имя:");
+            const quantity = prompt("Введите количество:");
+
+            if (!customerName) {
+                alert("Имя обязательно!");
+                return;
+            }
+            if (!quantity || isNaN(quantity) || quantity <= 0) {
+                alert("Введите корректное количество больше нуля.");
+                return;
+            }
+
+            fetch('/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: parseInt(quantity),
+                    customer_name: customerName
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.error) {
+                    alert("Ошибка: " + data.error);
+                  } else {
+                    alert("Заказ успешно создан!");
+                  }
+            })
+            .catch(error => {
+                alert("Ошибка при создании заказа: " + error);
+            });
+        }
+    </script>
+</body>
+</html>
